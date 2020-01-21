@@ -45,20 +45,6 @@ public abstract class GlobalConsoleTest extends TestBase {
         globalConsolePage = new ConsoleWebPage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
         globalConsolePage.openGlobalConsolePage();
         globalConsolePage.getAddressSpaceItems();
-        globalConsolePage.openAddressList(new AddressSpaceBuilder()
-                .withNewMetadata()
-                .withName("standard-shared-0")
-                .withNamespace(kubernetes.getInfraNamespace())
-                .endMetadata()
-                .withNewSpec()
-                .withType(AddressSpaceType.STANDARD.toString())
-                .withPlan(AddressSpacePlans.STANDARD_UNLIMITED)
-                .withNewAuthenticationService()
-                .withName("standard-authservice")
-                .endAuthenticationService()
-                .endSpec()
-                .build());
-        globalConsolePage.getAddressItems();
         globalConsolePage.logout();
     }
 
@@ -192,48 +178,5 @@ public abstract class GlobalConsoleTest extends TestBase {
                     return false;
                 });
         assertTrue(active, String.format("Address space %s not marked active in UI within timeout", name));
-    }
-
-    protected void doTestOpenConsoleCustomRoute() throws Exception {
-        String endpointPrefix = "test-endpoint-";
-
-        AddressSpace addressSpace = new AddressSpaceBuilder()
-                .withNewMetadata()
-                .withName("standard")
-                .withNamespace(kubernetes.getInfraNamespace())
-                .endMetadata()
-                .withNewSpec()
-                .withType(AddressSpaceType.STANDARD.toString())
-                .withPlan(AddressSpacePlans.STANDARD_SMALL)
-                .withNewAuthenticationService()
-                .withName("standard-authservice")
-                .endAuthenticationService()
-
-                .addNewEndpoint()
-                .withName(endpointPrefix + "console")
-                .withService("console")
-                .editOrNewExpose()
-                .withType(ExposeType.route)
-                .withRouteTlsTermination(TlsTermination.reencrypt)
-                .withRouteServicePort("https")
-                .endExpose()
-                .endEndpoint()
-
-                .endSpec()
-                .build();
-        ISOLATED_RESOURCES_MANAGER.createAddressSpace(addressSpace);
-        log.warn("Addressspace::     " + addressSpace);
-        log.warn("Finding: " + endpointPrefix + "console-" + AddressSpaceUtils.getAddressSpaceInfraUuid(addressSpace));
-
-        //try to get all external endpoints
-        kubernetes.getExternalEndpoint(endpointPrefix + "console-" + AddressSpaceUtils.getAddressSpaceInfraUuid(addressSpace));
-
-        AddressSpaceConsoleWebPage console = new AddressSpaceConsoleWebPage(
-                selenium,
-                AddressSpaceUtils.getConsoleRoute(addressSpace),
-                addressSpace,
-                clusterUser);
-        console.openWebConsolePage();
-        console.openAddressesPageWebConsole();
     }
 }

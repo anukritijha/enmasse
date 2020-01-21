@@ -69,10 +69,5 @@ class ChromeGlobalConsoleTest extends GlobalConsoleTest implements ITestIsolated
     void testCreateAddrSpaceNonClusterAdmin() throws Exception {
         doTestCreateAddrSpaceNonClusterAdmin();
     }
-
-    @Test
-    void testSwitchAddressSpacePlan() throws Exception {
-        doTestSwitchAddressSpacePlan();
-    }
 }
 

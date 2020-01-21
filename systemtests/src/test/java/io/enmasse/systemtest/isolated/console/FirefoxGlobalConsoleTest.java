@@ -74,10 +74,5 @@ class FirefoxGlobalConsoleTest extends GlobalConsoleTest implements ITestIsolate
     void testSwitchAddressSpacePlan() throws Exception {
         doTestSwitchAddressSpacePlan();
     }
-
-    @Test
-    void testOpenConsoleCustomRoute() throws Exception {
-        doTestOpenConsoleCustomRoute();
-    }
 }
 

@@ -10,8 +10,8 @@ import io.enmasse.systemtest.UserCredentials;
 import io.enmasse.systemtest.logs.CustomLogger;
 import io.enmasse.systemtest.model.addressspace.AddressSpaceType;
 import io.enmasse.systemtest.selenium.SeleniumProvider;
-import io.enmasse.systemtest.selenium.resources.AddressWebItem;
 import io.enmasse.systemtest.selenium.resources.AddressSpaceWebItem;
+import io.enmasse.systemtest.selenium.resources.AddressWebItem;
 import io.enmasse.systemtest.utils.AddressSpaceUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -45,8 +45,12 @@ public class ConsoleWebPage implements IWebPage {
         return selenium.getDriver().findElement(By.id("main-container"));
     }
 
-    private WebElement getCreateButton() {
+    private WebElement getCreateAddressSpaceButtonTop() {
         return selenium.getDriver().findElement(By.id("al-filter-overflow-button"));
+    }
+
+    private WebElement getCreateAddressSpaceButtonEmptyPage() {
+        return selenium.getDriver().findElement(By.id("empty-ad-space-create-button"));
     }
 
     private WebElement getAddressSpaceTable() {
@@ -116,9 +120,9 @@ public class ConsoleWebPage implements IWebPage {
     }
 
     //////////////////////////////////////////////////////////////////////
-    private WebElement getAddressSpaceMenu() {
-        return getContentElem().findElement(By.className("pf-l-toolbar"))
-                .findElement(By.className("pf-c-dropdown__toggle"));
+    private WebElement getDeleteAllButton() {
+        return getContentElem().findElement(By.id("al-filter-overflow-dropdown"))
+                .findElement(By.xpath("./button[contains(text(), 'Delete All')]"));
     }
 
     private WebElement getDeleteButton() {
@@ -126,27 +130,27 @@ public class ConsoleWebPage implements IWebPage {
     }
 
     private WebElement getNamespaceDropDown() {
-        return selenium.getDriver().findElement(By.id("form-namespace"));
+        return selenium.getDriver().findElement(By.id("cas-dropdown-namespace"));
     }
 
-    private WebElement authServiceDropDown() {
-        return selenium.getDriver().findElement(By.id("form-authservice"));
+    private WebElement getAuthServiceDropDown() {
+        return selenium.getDriver().findElement(By.id("cas-dropdown-auth-service"));
     }
 
     private WebElement getAddressSpaceNameInput() {
-        return selenium.getDriver().findElement(By.id("form-name"));
+        return selenium.getDriver().findElement(By.id("address-space"));
     }
 
     private WebElement getBrokeredRadioButton() {
-        return selenium.getDriver().findElement(By.id("radio-addressspace-brokered"));
+        return selenium.getDriver().findElement(By.id("cas-brokered-radio"));
     }
 
     private WebElement getStandardRadioButton() {
-        return selenium.getDriver().findElement(By.id("radio-addressspace-standard"));
+        return selenium.getDriver().findElement(By.id("cas-standard-radio"));
     }
 
     private WebElement getPlanDropDown() {
-        return selenium.getDriver().findElement(By.id("form-planName"));
+        return selenium.getDriver().findElement(By.id("cas-dropdown-plan"));
     }
 
     private WebElement getNextButton() {
@@ -165,16 +169,8 @@ public class ConsoleWebPage implements IWebPage {
         return selenium.getDriver().findElement(By.xpath("//button[contains(text(), 'Back')]"));
     }
 
-    private WebElement getTable() {
-        return selenium.getDriver().findElement(By.id("table-instances"));
-    }
-
-    private WebElement getModalBox() {
-        return selenium.getDriver().findElement(By.className("pf-c-modal-box"));
-    }
-
     private WebElement getModalButtonDelete() {
-        return getModalBox().findElement(By.id("button-delete"));
+        return selenium.getDriver().findElement(By.xpath("//button[contains(text(), 'Confirm')]"));
     }
 
 
@@ -208,25 +204,23 @@ public class ConsoleWebPage implements IWebPage {
         selenium.getWebElement(this::getAddressList);
     }
 
-    //////////////////////////////////////////////////////////
-
     private void selectNamespace(String namespace) throws Exception {
         selenium.clickOnItem(getNamespaceDropDown(), "namespace dropdown");
-        selenium.clickOnItem(selenium.getDriver().findElement(By.xpath("//option[@value='" + namespace + "']")), namespace);
+        selenium.clickOnItem(selenium.getDriver().findElement(By.xpath("//button[@value='" + namespace + "']")), namespace);
     }
 
     private void selectPlan(String plan) throws Exception {
         selenium.clickOnItem(getPlanDropDown(), "address space plan dropdown");
-        selenium.clickOnItem(selenium.getDriver().findElement(By.xpath("//option[@value='" + plan + "']")), plan);
+        selenium.clickOnItem(selenium.getDriver().findElement(By.xpath("//button[@value='" + plan + "']")), plan);
     }
 
     private void selectAuthService(String authService) throws Exception {
-        selenium.clickOnItem(getPlanDropDown(), "address space plan dropdown");
-        selenium.clickOnItem(selenium.getDriver().findElement(By.xpath("//option[@value='" + authService + "']")), authService);
+        selenium.clickOnItem(getAuthServiceDropDown(), "address space plan dropdown");
+        selenium.clickOnItem(selenium.getDriver().findElement(By.xpath("//button[@value='" + authService + "']")), authService);
     }
 
     public void createAddressSpace(AddressSpace addressSpace) throws Exception {
-        selenium.clickOnItem(getCreateButton());
+        selenium.clickOnItem(getCreateAddressSpaceButtonTop());
         selectNamespace(addressSpace.getMetadata().getNamespace());
         selenium.fillInputItem(getAddressSpaceNameInput(), addressSpace.getMetadata().getName());
         selenium.clickOnItem(addressSpace.getSpec().getType().equals(AddressSpaceType.BROKERED.toString().toLowerCase()) ? getBrokeredRadioButton() : getStandardRadioButton(),
@@ -235,7 +229,6 @@ public class ConsoleWebPage implements IWebPage {
         selectAuthService(addressSpace.getSpec().getAuthenticationService().getName());
         selenium.clickOnItem(getNextButton());
         selenium.clickOnItem(getFinishButton());
-        selenium.refreshPage();
         selenium.waitUntilItemPresent(30, () -> getAddressSpaceItem(addressSpace));
         selenium.takeScreenShot();
         AddressSpaceUtils.waitForAddressSpaceReady(addressSpace);
@@ -244,9 +237,8 @@ public class ConsoleWebPage implements IWebPage {
 
     public void deleteAddressSpace(AddressSpace addressSpace) throws Exception {
         AddressSpaceWebItem item = selenium.waitUntilItemPresent(30, () -> getAddressSpaceItem(addressSpace));
-        selenium.clickOnItem(item.getCheckBox(), "Select address space to delete");
-        selenium.clickOnItem(getAddressSpaceMenu(), "Address space dropdown");
-        selenium.clickOnItem(getDeleteButton());
+        selenium.clickOnItem(item.getActionDropDown(), "Address space dropdown");
+        selenium.clickOnItem(item.getDeleteMenuItem());
         selenium.clickOnItem(getModalButtonDelete());
         selenium.waitUntilItemNotPresent(30, () -> getAddressSpaceItem(addressSpace));
     }
